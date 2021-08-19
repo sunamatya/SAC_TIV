@@ -26,8 +26,9 @@ class Intent_Inference_Env(gym.Env):
         Type: Box(4)??
         Num     Observation               Min                     Max
         0       Car Position              -2                       2
-        1       Car Action                -3                       2
-        2       Belief theta Vehicles      0                       1      *4*2
+        1       Car Velocity               -0.05                   0.05
+        2       Car Input                  -2                       3
+        3       Belief theta Vehicles      0                       1      *4*2
 
     Actions:
         Type: Discrete(2)
@@ -59,12 +60,15 @@ class Intent_Inference_Env(gym.Env):
         self.y_threshold = 3.0
 
 
-        # is still within bounds.
+        # is still within bounds. # car1 -2-1 # car2 2, -1
         low = np.array(
-            [   -self.x_threshold,
-                -self.y_threshold,
-                -3,
-                -3,
+            [
+                -2,
+                -1,
+                -0.05,
+                -0.05,
+                -2,
+                -2,
                 0.0,
                 0.0,
                 0.0,
@@ -79,10 +83,12 @@ class Intent_Inference_Env(gym.Env):
 
         high = np.array(
             [
-                self.x_threshold,
-                self.y_threshold,
+                1,
                 2,
-                2,
+                0.05,
+                0.05,
+                3,
+                3,
                 1.0,
                 1.0,
                 1.0,
@@ -176,12 +182,23 @@ class Intent_Inference_Env(gym.Env):
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
-        reward = -(plannedloss_car1+ plannedloss_car2+ action*plannedloss_car1)
-        self.state = (self.car_1.states[0][0], self.car_2.states[0][1], self.car_1.planned_trajectory[0],
-                      self.car_2.planned_trajectory[0], self.car_1.joint_probability_matrix[0,0], self.car_1.joint_probability_matrix[0,1],
-                      self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1,1],
+        #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
+        #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        reward = plannedloss_car1-action*plannedloss_car1
+        #reward = plannedloss_car1 - action * (plannedloss_car1)/2
+
+        self.state = (self.car_1.states[self.episode_steps][0], self.car_2.states[self.episode_steps][1],
+                      self.car_1.actions_set[-1][0], self.car_2.actions_set[-1][1],
+                      self.car_1.planned_trajectory[0], self.car_2.planned_trajectory[0],
+                      self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
+                      self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
                       self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
                       self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
+        # self.state = (self.car_1.states[0][0], self.car_2.states[0][1], self.car_1.planned_trajectory[0],
+        #               self.car_2.planned_trajectory[0], self.car_1.joint_probability_matrix[0,0], self.car_1.joint_probability_matrix[0,1],
+        #               self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1,1],
+        #               self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
+        #               self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
 
 
         self.s = self.state
@@ -226,7 +243,9 @@ class Intent_Inference_Env(gym.Env):
         self.car_1.does_inference= True
         self.car_2.does_inference= True
 
-        self.state = (self.car_1.states[0][0], self.car_2.states[0][1], 0 , 0,
+        self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
+                      C.PARAMETERSET_2.INITIAL_SPEED, -C.PARAMETERSET_2.INITIAL_SPEED,
+                      0 , 0,
                       self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
                       self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
                       self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],

@@ -11,9 +11,13 @@ from nn_builder.pytorch.NN import NN
 # from tensorboardX import SummaryWriter
 from torch.optim import optimizer
 
+
+
+
 class Base_Agent(object):
 
     def __init__(self, config):
+        # self.model = None
         self.logger = self.setup_logger()
         self.debug_mode = config.debug_mode
         # if self.debug_mode: self.tensorboard = SummaryWriter()
@@ -192,6 +196,23 @@ class Base_Agent(object):
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
         if self.config.save_model: self.locally_save_policy()
         return self.game_full_episode_scores, self.rolling_results, time_taken
+
+    def run_n_episodes_eval(self, num_episodes=None, show_whether_achieved_goal=True, save_and_print_results=True):
+        """Runs game to completion n times and then summarises results and saves model (if asked to)"""
+        if num_episodes is None: num_episodes = self.config.num_episodes_to_run
+        start = time.time()
+
+        while self.episode_number < num_episodes:
+            self.reset_game()
+            self.step_eval()
+
+            if save_and_print_results: self.save_and_print_result()
+        time_taken = time.time() - start
+
+        if show_whether_achieved_goal: self.show_whether_achieved_goal()
+        return self.game_full_episode_scores, self.rolling_results, time_taken
+
+
 
     def conduct_action(self, action):
         """Conducts an action in the environment"""

@@ -15,7 +15,9 @@ class SAC_Discrete(SAC):
         Base_Agent.__init__(self, config)
         assert self.action_types == "DISCRETE", "Action types must be discrete. Use SAC instead for continuous actions"
         assert self.config.hyperparameters["Actor"]["final_layer_activation"] == "Softmax", "Final actor layer must be softmax"
+        #assert self.config.hyperparameters["Actor_Critic_Agents"]["Actor"]["final_layer_activation"] == "Softmax", "Final actor layer must be softmax"
         self.hyperparameters = config.hyperparameters
+        #self.hyperparameters = config.hyperparameters["Actor_Critic_Agents"]
         self.critic_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Critic")
         self.critic_local_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
                                            key_to_use="Critic", override_seed=self.config.seed + 1)
@@ -88,3 +90,21 @@ class SAC_Discrete(SAC):
         policy_loss = (action_probabilities * inside_term).sum(dim=1).mean()
         log_action_probabilities = torch.sum(log_action_probabilities * action_probabilities, dim=1)
         return policy_loss, log_action_probabilities
+
+    def save(self):
+        torch.save(self.critic_local.state_dict(), 'critic-local')
+        torch.save(self.critic_local_2.state_dict(), 'critic-local-2')
+        torch.save(self.actor_local.state_dict(), 'actor-local')
+
+    def load_model_eval(self, actor_path, critic_path):
+        print('Loading models from {} and {}'.format(actor_path, critic_path))
+        if actor_path is not None:
+            self.actor_local.load_state_dict(torch.load(actor_path))
+            self.actor_local.eval()
+
+        if critic_path is not None:
+            self.critic_local.load_state_dict(torch.load(critic_path))
+            self.critic_local.eval()
+
+
+

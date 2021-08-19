@@ -7,6 +7,11 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
 
+from IPython.display import clear_output
+import matplotlib.pyplot as plt
+from matplotlib import animation
+from IPython.display import display
+
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
 TRAINING_EPISODES_PER_EVAL_EPISODE = 10
@@ -76,7 +81,10 @@ class SAC(Base_Agent):
 
     def step(self):
         """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
-        eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
+        if self.episode_number == 0:
+            eval_ep = False
+        else:
+            eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
         self.episode_step_number_val = 0
         while not self.done:
             self.episode_step_number_val += 1
@@ -92,6 +100,47 @@ class SAC(Base_Agent):
         print(self.total_episode_score_so_far)
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
+
+    def step_eval(self):
+        """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
+        #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
+        eval_ep = True
+        self.episode_step_number_val = 0
+        frames = []
+
+        while not self.done:
+            self.episode_step_number_val += 1
+            self.action = self.pick_action(eval_ep)
+            self.conduct_action(self.action)
+            # if self.time_for_critic_and_actor_to_learn():
+            #     for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
+            #         self.learn()
+            mask = False if self.episode_step_number_val >= self.environment._max_episode_steps else self.done
+            #if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+            self.state = self.next_state
+            self.global_step_number += 1
+            frames.append(self.environment.render(mode='rgb_array'))
+            #print("tester:", len(frames))
+
+        print(self.total_episode_score_so_far)
+        self.display_frames_as_gif(frames)
+        if eval_ep: self.print_summary_of_latest_evaluation_episode()
+        self.episode_number += 1
+
+    def display_frames_as_gif(self, frames):
+        """
+        Displays a list of frames as a gif, with controls
+        """
+        # plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi = 72)
+        patch = plt.imshow(frames[0])
+        plt.axis('off')
+
+        def animate(i):
+            patch.set_data(frames[i])
+
+        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=1)
+        #anim.save('myAnimation.gif', writer='imagemagick', fps=30)
+        display(anim)
 
     def pick_action(self, eval_ep, state=None):
         """Picks an action using one of three methods: 1) Randomly if we haven't passed a certain number of steps,
