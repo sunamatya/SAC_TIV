@@ -106,7 +106,9 @@ class SAC(Base_Agent):
         #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
         eval_ep = True
         self.episode_step_number_val = 0
-        frames = []
+        name = str(self.environment.id)
+        if name == "<CartPoleEnv<CartPole-v0>>":
+            frames = []
 
         while not self.done:
             self.episode_step_number_val += 1
@@ -119,11 +121,17 @@ class SAC(Base_Agent):
             #if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
             self.state = self.next_state
             self.global_step_number += 1
-            frames.append(self.environment.render(mode='rgb_array'))
+            if name == "<CartPoleEnv<CartPole-v0>>":
+                frames.append(self.environment.render(mode='rgb_array'))
+            if name == "Intent Inf":
+                self.environment.save_show_data()
             #print("tester:", len(frames))
 
         print(self.total_episode_score_so_far)
-        self.display_frames_as_gif(frames)
+        if name == "<CartPoleEnv<CartPole-v0>>":
+            self.display_frames_as_gif(frames)
+        if name == "Intent Inf":
+            self.environment.show_plots()
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
 
