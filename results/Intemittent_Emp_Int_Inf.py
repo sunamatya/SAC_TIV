@@ -5,7 +5,7 @@ sys.path.append(dirname(dirname(abspath(__file__))))
 sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\SocialGracefullnessTIV")
 
 import gym
-from environments.Intent_Inference_Env import Intent_Inference_Env
+from environments.Intent_Inference_Env_Training import Intent_Inference_Env
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config
