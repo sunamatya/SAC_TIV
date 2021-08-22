@@ -182,8 +182,8 @@ class Intent_Inference_Env(gym.Env):
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
-        reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
-        #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
+        reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
         #reward = plannedloss_car1-action*plannedloss_car1 #car1 loss -effort
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
