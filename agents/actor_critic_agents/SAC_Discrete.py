@@ -6,6 +6,8 @@ from agents.Base_Agent import Base_Agent
 from utilities.data_structures.Replay_Buffer import Replay_Buffer
 from agents.actor_critic_agents.SAC import SAC
 from utilities.Utility_Functions import create_actor_distribution
+# import sys
+# sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results")
 
 class SAC_Discrete(SAC):
     """The Soft Actor Critic for discrete actions. It inherits from SAC for continuous actions and only changes a few
@@ -100,10 +102,16 @@ class SAC_Discrete(SAC):
         print('Loading models from {} and {}'.format(actor_path, critic_path))
         if actor_path is not None:
             self.actor_local.load_state_dict(torch.load(actor_path))
+            #self.actor_local.load_state_dict(torch.load(actor_path, map_location=torch.device('cpu')))
+            #path = "C:\\Users\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\actor-local"
+            #self.actor_local.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+
             self.actor_local.eval()
 
         if critic_path is not None:
             self.critic_local.load_state_dict(torch.load(critic_path))
+            #self.critic_local.load_state_dict(torch.load(critic_path, map_location=torch.device('cpu')))
+            #self.critic_local.load_state_dict(torch.load('C:\\Users\\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\critic-local', map_location=torch.device('cpu')))
             self.critic_local.eval()
 
 

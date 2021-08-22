@@ -190,13 +190,14 @@ class Intent_Inference_Env(gym.Env):
         assert action in [0, 1], "Action must be a 0 or a 1"
 
         skip_update_car2 = False
+        #print(action)
 
 
         #get actions here
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
-        if self.episode_steps == 0:
-            skip_update_car1 = False
+        # if self.episode_steps == 0:
+        #     skip_update_car1 = False
 
 
 
@@ -297,6 +298,13 @@ class Intent_Inference_Env(gym.Env):
 
     def save_show_data(self):
         import numpy as np
+
+        grace = []
+        for wanted_trajectory_other in self.car_2.wanted_trajectory_other:
+            wanted_actions_other = self.car_2.dynamic(wanted_trajectory_other)
+            grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
+        self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
+
         intent_loss_car_1 = self.car_1.intent * np.exp(
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
         intent_loss_car_2 = self.car_2.intent * np.exp(
@@ -324,7 +332,7 @@ class Intent_Inference_Env(gym.Env):
                                   theta_probability=self.car_1.theta_probability,
                                   social_gracefulness=self.car_1.social_gracefulness,
                                   planned_loss=plannedloss_car1,
-                                  does_inf=self.car_1.skip_update,
+                                  does_inf=not self.car_1.skip_update,
                                   predicted_trajectory_other=self.car_1.predicted_trajectory_set_other)
 
         self.sim_data.append_car2(states=self.car_2.states,
@@ -343,7 +351,7 @@ class Intent_Inference_Env(gym.Env):
                                   inference_probability_proactive=self.car_2.inference_probability_proactive,
                                   theta_probability=self.car_2.theta_probability,
                                   planned_loss=plannedloss_car2,
-                                  does_inf=self.car_2.skip_update,
+                                  does_inf=not self.car_2.skip_update,
                                   predicted_trajectory_other=self.car_2.predicted_trajectory_set_other)
 
         self.sim_draw.draw_frame(self.sim_data, 0 , self.episode_steps-1)

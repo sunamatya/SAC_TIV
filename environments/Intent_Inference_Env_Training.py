@@ -6,9 +6,9 @@ from gym import spaces, logger
 from gym.utils import seeding
 import math
 import sys
-#sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\SocialGracefullnessTIV")
-from SocialGracefullnessTIV.constants import CONSTANTS as C
-from SocialGracefullnessTIV.autonomous_vehicle_nosim import AutonomousVehicle
+sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\SocialGracefullnessTIV")
+from constants import CONSTANTS as C
+from autonomous_vehicle_nosim import AutonomousVehicle
 
 
 class Intent_Inference_Env(gym.Env):
@@ -161,8 +161,8 @@ class Intent_Inference_Env(gym.Env):
         #get actions here
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
-        if self.episode_steps == 0:
-            skip_update_car1 = False
+        # if self.episode_steps == 0:
+        #     skip_update_car1 = False
 
 
 
@@ -182,9 +182,9 @@ class Intent_Inference_Env(gym.Env):
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
-        #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
+        reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
         #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
-        reward = plannedloss_car1-action*plannedloss_car1
+        #reward = plannedloss_car1-action*plannedloss_car1 #car1 loss -effort
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
         self.state = (self.car_1.states[self.episode_steps][0], self.car_2.states[self.episode_steps][1],
