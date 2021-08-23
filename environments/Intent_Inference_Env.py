@@ -141,11 +141,12 @@ class Intent_Inference_Env(gym.Env):
 
         self.sim_data = Sim_Data()
 
-        if C.DRAW:
+        draw = True
+        if draw:
             self.sim_draw = Sim_Draw(self.P, C.ASSET_LOCATION)
             pg.display.flip()
             # self.capture = True if input("Capture video (y/n): ") else False
-            self.capture = False
+            self.capture = True
             self.output_data_pickle = False
             output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             if self.output_data_pickle or self.capture:
@@ -196,8 +197,8 @@ class Intent_Inference_Env(gym.Env):
         #get actions here
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
-        # if self.episode_steps == 0:
-        #     skip_update_car1 = False
+        if self.episode_steps == 0:
+            skip_update_car1 = False
 
 
 
@@ -218,8 +219,8 @@ class Intent_Inference_Env(gym.Env):
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
-        reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
-        #reward = plannedloss_car1-action*plannedloss_car1
+        #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
         self.state = (self.car_1.states[self.episode_steps][0], self.car_2.states[self.episode_steps][1],
@@ -355,6 +356,14 @@ class Intent_Inference_Env(gym.Env):
                                   predicted_trajectory_other=self.car_2.predicted_trajectory_set_other)
 
         self.sim_draw.draw_frame(self.sim_data, 0 , self.episode_steps-1)
+
+
+
+
+        if self.capture:
+            pg.image.save(self.sim_draw.screen, "%simg%03d.jpeg" % (self.output_dir, self.episode_steps-1))
+
+
 
     def show_plots(self):
         import matplotlib.pyplot as plt
@@ -554,6 +563,21 @@ class Intent_Inference_Env(gym.Env):
             ax2.legend()
             ax2.set(xlabel='time', ylabel='trajectory')
             plt.show()
+
+        if self.capture:
+            # Compile to video
+            # os.system("ffmpeg -f image2 -framerate 1 -i %simg%%03d.jpeg %s/output_video.mp4 " % (self.output_dir, self.output_dir))
+            img_list = [self.output_dir+"img"+str(i).zfill(3)+".jpeg" for i in range( self.episode_steps-1)]
+            import imageio
+            images = []
+            for filename in img_list:
+                images.append(imageio.imread(filename))
+            imageio.mimsave(self.output_dir+'movie.gif', images)
+            #
+            # # Delete images
+            # [os.remove(self.output_dir + file) for file in os.listdir(self.output_dir) if ".jpeg" in file]
+            # print("Simulation video output saved to %s." % self.output_dir)
+        print("Simulation ended.")
 
 
 
