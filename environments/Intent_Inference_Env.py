@@ -197,8 +197,10 @@ class Intent_Inference_Env(gym.Env):
         #get actions here
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
-        # if self.episode_steps == 0:
+        # #if self.episode_steps == 0:
+        # if self.episode_steps< 3:
         #     skip_update_car1 = False
+        #     action = 1
 
 
 
@@ -212,16 +214,28 @@ class Intent_Inference_Env(gym.Env):
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
         intent_loss_car_2 = self.car_2.intent * np.exp(
             C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
-        D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
-        collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
-        # collision_loss =
 
-        # print(collision_loss)
+        predicted_distance = np.sum((self.car_1.temp_action_set - self.car_2.temp_action_set)**2, axis=1)
+        D= np.sqrt(predicted_distance)
+
+        #collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+        collision_loss = np.sum(np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5)))
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
+        print(intent_loss_car_1)
+        print(intent_loss_car_2)
+        print(collision_loss)
+        #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
+        alpha = 1
+
+        # D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
+        # collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+        # collision_loss =
+
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
-        reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
         #reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
@@ -243,10 +257,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[0][0] < -self.x_threshold
-            or self.car_1.states[0][0] > self.x_threshold
-            or self.car_2.states[0][1] < -self.y_threshold
-            or self.car_2.states[0][1] > self.y_threshold
+            self.car_1.states[self.episode_steps][0] < -self.x_threshold
+            or self.car_1.states[self.episode_steps][0] > self.x_threshold
+            or self.car_2.states[self.episode_steps][1] < -self.y_threshold
+            or self.car_2.states[self.episode_steps][1] > self.y_threshold
             or self.episode_steps > self._max_episode_steps
             )
 
@@ -308,17 +322,23 @@ class Intent_Inference_Env(gym.Env):
             grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
         self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
 
+
+
+        # D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
+        # collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+
         intent_loss_car_1 = self.car_1.intent * np.exp(
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
         intent_loss_car_2 = self.car_2.intent * np.exp(
             C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
 
-        D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
-        collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+        predicted_distance = np.sum((self.car_1.temp_action_set - self.car_2.temp_action_set) ** 2, axis=1)
+        D = np.sqrt(predicted_distance)
 
-
+        collision_loss = np.sum(np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5)))
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
+
 
         self.sim_data.append_car1(states=self.car_1.states,
                                   actions=self.car_1.actions_set,
@@ -338,7 +358,8 @@ class Intent_Inference_Env(gym.Env):
                                   social_gracefulness=self.car_1.social_gracefulness,
                                   planned_loss=plannedloss_car1,
                                   does_inf=not self.car_1.skip_update,
-                                  predicted_trajectory_other=self.car_1.predicted_trajectory_set_other)
+                                  predicted_trajectory_other=self.car_1.predicted_trajectory_set_other,
+                                  collision_loss=collision_loss)
 
         self.sim_data.append_car2(states=self.car_2.states,
                                   actions=self.car_2.actions_set,

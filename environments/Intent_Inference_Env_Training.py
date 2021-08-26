@@ -161,8 +161,8 @@ class Intent_Inference_Env(gym.Env):
         #get actions here
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
-        if self.episode_steps == 0:
-            skip_update_car1 = False
+        # if self.episode_steps == 0:
+        #     skip_update_car1 = False
 
 
 
@@ -176,13 +176,18 @@ class Intent_Inference_Env(gym.Env):
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
         intent_loss_car_2 = self.car_2.intent * np.exp(
             C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
-        D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
-        collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+        #D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
+        predicted_distance = np.sum((self.car_1.temp_action_set - self.car_2.temp_action_set)**2, axis=1)
+        D= np.sqrt(predicted_distance)
+
+        #collision_loss = np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5))
+        collision_loss = np.sum(np.exp(C.EXPCOLLISION * (-D + C.CAR_LENGTH ** 2 * 1.5)))
         plannedloss_car1 = intent_loss_car_1 + collision_loss
         plannedloss_car2 = intent_loss_car_2 + collision_loss
 
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
-        reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
+        alpha = 1
+        reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
         #reward = plannedloss_car1-action*plannedloss_car1 #car1 loss -effort
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
@@ -204,10 +209,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[0][0] < -self.x_threshold
-            or self.car_1.states[0][0] > self.x_threshold
-            or self.car_2.states[0][1] < -self.y_threshold
-            or self.car_2.states[0][1] > self.y_threshold
+            self.car_1.states[self.episode_steps][0] < -self.x_threshold
+            or self.car_1.states[self.episode_steps][0] > self.x_threshold
+            or self.car_2.states[self.episode_steps][1] < -self.y_threshold
+            or self.car_2.states[self.episode_steps][1] > self.y_threshold
             or self.episode_steps > self._max_episode_steps
             )
 

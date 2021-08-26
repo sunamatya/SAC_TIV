@@ -14,24 +14,24 @@ from utilities.data_structures.Config import Config
 config = Config()
 config.seed = 1
 config.environment = Intent_Inference_Env()
-config.num_episodes_to_run = 450
-config.file_to_save_data_results = "results/data_and_graphs/Emp_Intent_Inf_Results_Data.pkl"
-config.file_to_save_results_graph = "results/data_and_graphs/Emp_Intent_Inf_Results_Graph.png"
+config.num_episodes_to_run = 150
+config.file_to_save_data_results = "data_and_graphs/Emp_Intent_Inf_Results_Data.pkl"
+config.file_to_save_results_graph = "data_and_graphs/Emp_Intent_Inf_Results_Graph.png"
 config.show_solution_score = False
 config.visualise_individual_results = False
 config.visualise_overall_agent_results = True
 config.standard_deviation_results = 1.0
 config.runs_per_agent = 1
-config.use_GPU = False
+config.use_GPU = True
 config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
-config.save_model = True
+config.save_model = False
 
 
 config.hyperparameters = {
     "Actor_Critic_Agents":  {
 
-        "learning_rate": 0.005,
+        "learning_rate": 0.01, #0.005
         "linear_hidden_units": [20, 10],
         "final_layer_activation": ["SOFTMAX", None],
         "gradient_clipping_norm": 5.0,
@@ -42,7 +42,7 @@ config.hyperparameters = {
         "clip_rewards": False,
 
         "Actor": {
-            "learning_rate": 0.0003,
+            "learning_rate": 0.01, #0.0003
             "linear_hidden_units": [64, 64],
             "final_layer_activation": "Softmax",
             "batch_norm": False,
@@ -52,7 +52,7 @@ config.hyperparameters = {
         },
 
         "Critic": {
-            "learning_rate": 0.0003,
+            "learning_rate": 0.01,
             "linear_hidden_units": [64, 64],
             "final_layer_activation": None,
             "batch_norm": False,
@@ -62,7 +62,7 @@ config.hyperparameters = {
             "initialiser": "Xavier"
         },
 
-        "min_steps_before_learning": 400,
+        "min_steps_before_learning": 100,
         "batch_size": 256,
         "discount_rate": 0.99,
         "mu": 0.0, #for O-H noise
