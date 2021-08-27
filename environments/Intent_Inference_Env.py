@@ -127,7 +127,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="non empathetic")  #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -146,7 +146,7 @@ class Intent_Inference_Env(gym.Env):
             self.sim_draw = Sim_Draw(self.P, C.ASSET_LOCATION)
             pg.display.flip()
             # self.capture = True if input("Capture video (y/n): ") else False
-            self.capture = True
+            self.capture = False
             self.output_data_pickle = False
             output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             if self.output_data_pickle or self.capture:
@@ -173,6 +173,8 @@ class Intent_Inference_Env(gym.Env):
         self.show_loss = True
         self.show_predicted_states_others = False
         self.show_does_inference = True
+        self.show_reward = True
+        self.reward_container = []
 
 
     def seed(self, seed=None):
@@ -198,9 +200,9 @@ class Intent_Inference_Env(gym.Env):
         if action == 1: skip_update_car1 = False
         else: skip_update_car1 = True
         # #if self.episode_steps == 0:
-        # if self.episode_steps< 3:
-        #     skip_update_car1 = False
-        #     action = 1
+        # if self.episode_steps> 3:
+        #     skip_update_car1 = True
+        #     action = 0
 
 
 
@@ -236,6 +238,7 @@ class Intent_Inference_Env(gym.Env):
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
         #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
         reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
+        self.reward_container.append(reward)
         #reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
@@ -285,7 +288,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="non empathetic")  #H
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
@@ -589,6 +592,10 @@ class Intent_Inference_Env(gym.Env):
             ax2.set(xlabel='time', ylabel='trajectory')
             plt.show()
 
+        if self.show_reward:
+            plt.plot(self.reward_container)
+            plt.show()
+
         if self.capture:
             # Compile to video
             # os.system("ffmpeg -f image2 -framerate 1 -i %simg%%03d.jpeg %s/output_video.mp4 " % (self.output_dir, self.output_dir))
@@ -603,6 +610,7 @@ class Intent_Inference_Env(gym.Env):
             # [os.remove(self.output_dir + file) for file in os.listdir(self.output_dir) if ".jpeg" in file]
             # print("Simulation video output saved to %s." % self.output_dir)
         print("Simulation ended.")
+
 
 
 
