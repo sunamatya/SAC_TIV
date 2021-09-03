@@ -15,6 +15,7 @@ from sim_data import Sim_Data
 import pygame as pg
 import datetime
 import os
+import pickle
 
 
 class Intent_Inference_Env(gym.Env):
@@ -237,7 +238,8 @@ class Intent_Inference_Env(gym.Env):
 
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1
         #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
-        reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
+        #reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
+        reward = -(intent_loss_car_1+ (intent_loss_car_2 / 1e3)+ collision_loss+ alpha*action* 400)
         self.reward_container.append(reward)
         #reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
@@ -398,22 +400,25 @@ class Intent_Inference_Env(gym.Env):
         import numpy as np
         self.frame = self.episode_steps-1
         if self.show_prob_theta:
-            car_1_theta = np.empty((0, 2))
-            car_2_theta = np.empty((0, 2))
+            # car_1_theta = np.empty((0, 2))
+            # car_2_theta = np.empty((0, 2))
+            car_1_theta = np.ones((1,2))*0.5
+            car_2_theta = np.ones((1,2))*0.5
+
             for t in range(self.frame):
                 car_1_theta = np.append(car_1_theta, np.expand_dims(self.sim_data.car2_theta_probability[t], axis=0), axis=0)
                 car_2_theta = np.append(car_2_theta, np.expand_dims(self.sim_data.car1_theta_probability[t], axis=0), axis=0)
 
             plt.subplot(2, 1, 1)
             plt.title("Probability graph of the vehicle")
-            plt.plot(range(1,self.frame+1), car_1_theta[:,0], label = "$\hat{\Theta}_M$= 1" )
-            plt.plot(range(1,self.frame+1), car_1_theta[:,1], label = "$\hat{\Theta}_M$= 10^3")
+            plt.plot(range(0,self.frame+1), car_1_theta[:,0], label = "$\hat{\Theta}_M$= 1" )
+            plt.plot(range(0,self.frame+1), car_1_theta[:,1], label = "$\hat{\Theta}_M$= 10^3")
             plt.ylabel("$p(\hat{\Theta}_M)$")
             plt.xlabel("frame")
             plt.legend()
             plt.subplot(2, 1, 2)
-            plt.plot(range(1,self.frame+1), car_2_theta[:,0], label = "$\hat{\Theta}_H$= 1" )
-            plt.plot(range(1,self.frame+1), car_2_theta[:,1], label = "$\hat{\Theta}_H$= 10^3" )
+            plt.plot(range(0,self.frame+1), car_2_theta[:,0], label = "$\hat{\Theta}_H$= 1" )
+            plt.plot(range(0,self.frame+1), car_2_theta[:,1], label = "$\hat{\Theta}_H$= 10^3" )
             plt.ylabel("$p(\hat{\Theta}_H)$")
             plt.xlabel("frame")
             plt.legend()

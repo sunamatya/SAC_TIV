@@ -9,6 +9,7 @@ import sys
 sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\SocialGracefullnessTIV")
 from constants import CONSTANTS as C
 from autonomous_vehicle_nosim import AutonomousVehicle
+import pickle
 
 
 class Intent_Inference_Env(gym.Env):
@@ -40,7 +41,7 @@ class Intent_Inference_Env(gym.Env):
         Reward is computed based on the reward of the task and the cost of carrying out intent inference at every step
 
     Starting state:
-        ??
+        All observations should be assigned a uniform random value in [-0.05.. 0.05]
 
     Episode termination:
         The episode terminates longer than 100 steps
@@ -121,7 +122,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="non empathetic")  #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -132,6 +133,7 @@ class Intent_Inference_Env(gym.Env):
         self.car_1.does_inference= True
         self.car_2.does_inference= True
         self.episode_steps = 0
+        self.trial = 0
 
 
         # self.num_states = num_states
@@ -217,6 +219,7 @@ class Intent_Inference_Env(gym.Env):
             )
 
 
+
         # make an array of the states
 
         return self.s, reward, self.done, {} # states, reward, done or not
@@ -229,8 +232,41 @@ class Intent_Inference_Env(gym.Env):
         self.visited_final_state = False
         self.episode_steps = 0
 
+        import pickle
+
+        data = pickle.load(open("uniform_data_dist.p", "rb"))
+        xpos = data["si"][self.trial]
+        ypos = data["sj"][self.trial]
+        vi = data["vi"] [self.trial]
+        vj = data["vj"][self.trial]
+        # ui = data["ui"] [self.trial]
+        # uj = data["uj"][self.trial]
+        bji_1 = data["bji"][self.trial][0]
+        bji_2 = data["bji"][self.trial][1]
+        bji_3 = data["bji"][self.trial][2]
+        bji_4 = data["bji"][self.trial][3]
+        bij_1 = data["bij"][self.trial][0]
+        bij_2 = data["bij"][self.trial][1]
+        bij_3 = data["bij"][self.trial][2]
+        bij_4 = data["bij"][self.trial][3]
+
+
+        self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0]) #np.array([-2.0, 0])
+        self.P.CAR_2.INITIAL_POSITION = np.array([0, ypos])
+        C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
+        C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
+
+
+
+        # prev_ui = C.TRAJECTORY_SET #pick random
+        # prev_uj = C.TRAJECTORY_SET #pick random
+
+        #generate 4 random points for joint probability matrix
+
+
+
         self.car_1 = AutonomousVehicle(scenario_parameters=self.P,
-                                       car_parameters_self=self.P.CAR_1,
+                                       car_parameters_self=self.P.CAR_1, # position from here
                                        loss_style="reactive",
                                        who=1,
                                        inference_type="empathetic")  #M
@@ -238,7 +274,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="non empathetic")  #H
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
@@ -248,22 +284,51 @@ class Intent_Inference_Env(gym.Env):
         self.car_1.does_inference= True
         self.car_2.does_inference= True
 
-        self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
-                      C.PARAMETERSET_2.INITIAL_SPEED, -C.PARAMETERSET_2.INITIAL_SPEED,
-                      0 , 0,
-                      self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
-                      self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
-                      self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
-                      self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
 
-        # self.state = (self.car_1.states[0][0], self.car_2.states[0][1], self.car_1.planned_trajectory[0][0],
-        #               self.car_2.planned_trajectory[0][0], self.car_1.joint_probability_matrix[0,0], self.car_1.joint_probability_matrix[0,1],
-        #               self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1,1],
+        self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
+                      C.PARAMETERSET_2.INITIAL_SPEED_1, -C.PARAMETERSET_2.INITIAL_SPEED_2,
+                      0 , 0,
+                      bji_1, bji_2,
+                      bji_3, bji_4,
+                      bij_1, bij_2,
+                      bij_3, bij_4)
+
+        # self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
+        #               C.PARAMETERSET_2.INITIAL_SPEED_1, -C.PARAMETERSET_2.INITIAL_SPEED_2,
+        #               0 , 0,
+        #               self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
+        #               self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
         #               self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
         #               self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
 
 
+        # calculate self.theta based on numbers above for car 1 and car2
+        if self.P.CAR_1.INTENT == 1:
+            cap = [bji_1,bji_2]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_1.theta_probability = cap2
+        else:
+            cap = [bji_3, bji_4]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_1.theta_probability = cap2
+
+
+        if self.P.CAR_2.INTENT == 1:
+            cap = [bij_1,bij_2]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_2.theta_probability = cap2
+        else:
+            cap = [bij_3, bij_4]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_2.theta_probability = cap2
+
+
         self.s = np.array(self.state)
+        self.trial = self.trial+1
         return self.s
 
     # def calc_next_states(self):
