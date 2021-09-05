@@ -11,6 +11,11 @@ from IPython.display import clear_output
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.display import display
+from memory_profiler import profile
+import time
+
+log_fp = open("test_memory_log.txt", "w")
+#from scalene import profile
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
@@ -101,6 +106,8 @@ class SAC(Base_Agent):
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
 
+
+    @profile(stream=log_fp)
     def step_eval(self):
         """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
         #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
@@ -131,7 +138,8 @@ class SAC(Base_Agent):
         if name == "<CartPoleEnv<CartPole-v0>>":
             self.display_frames_as_gif(frames)
         if name == "Intent Inf":
-            self.environment.show_plots()
+            #self.environment.show_plots()
+            self.environment.dump_data()
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
 

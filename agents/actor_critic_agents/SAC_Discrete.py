@@ -114,5 +114,29 @@ class SAC_Discrete(SAC):
             #self.critic_local.load_state_dict(torch.load('C:\\Users\\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\critic-local', map_location=torch.device('cpu')))
             self.critic_local.eval()
 
+    def load_model(self, actor_path, critic_path, critic_path_2):
+        print('Loading models from {} and {} and {}'.format(actor_path, critic_path, critic_path_2))
+        if actor_path is not None:
+            self.actor_local.load_state_dict(torch.load(actor_path))
+            #self.actor_local.load_state_dict(torch.load(actor_path, map_location=torch.device('cpu')))
+            #path = "C:\\Users\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\actor-local"
+            #self.actor_local.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+
+
+
+        if critic_path is not None:
+            self.critic_local.load_state_dict(torch.load(critic_path))
+            #self.critic_local.load_state_dict(torch.load(critic_path, map_location=torch.device('cpu')))
+            #self.critic_local.load_state_dict(torch.load('C:\\Users\\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\critic-local', map_location=torch.device('cpu')))
+
+
+        if critic_path_2 is not None:
+            self.critic_local_2.load_state_dict(torch.load(critic_path_2))
+            #self.critic_local.load_state_dict(torch.load(critic_path, map_location=torch.device('cpu')))
+            #self.critic_local.load_state_dict(torch.load('C:\\Users\\samatya.ASURITE\\PycharmProjects\\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\\results\\critic-local', map_location=torch.device('cpu')))
+
+
+
+
 
 

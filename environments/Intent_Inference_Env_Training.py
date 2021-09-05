@@ -122,7 +122,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="non empathetic")  #H
+                                       inference_type="empathetic")  #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -249,12 +249,21 @@ class Intent_Inference_Env(gym.Env):
         bij_2 = data["bij"][self.trial][1]
         bij_3 = data["bij"][self.trial][2]
         bij_4 = data["bij"][self.trial][3]
+        agg = data["agg"][self.trial]
 
 
         self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0]) #np.array([-2.0, 0])
         self.P.CAR_2.INITIAL_POSITION = np.array([0, ypos])
         C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
         C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
+        #keeping initial velocity parameter constant for now
+        # C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
+        # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
+
+        if agg:
+            self.P.CAR_2.INTENT = 1e6
+        else:
+            self.P.CAR_2.INTENT = 1
 
 
 

@@ -128,7 +128,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="non empathetic")  #H
+                                       inference_type="empathetic")  #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -142,13 +142,14 @@ class Intent_Inference_Env(gym.Env):
 
         self.sim_data = Sim_Data()
 
-        draw = True
-        if draw:
+        self.draw = False
+        self.capture = False
+        self.output_data_pickle = True
+        if self.draw:
             self.sim_draw = Sim_Draw(self.P, C.ASSET_LOCATION)
             pg.display.flip()
             # self.capture = True if input("Capture video (y/n): ") else False
-            self.capture = False
-            self.output_data_pickle = False
+
             output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             if self.output_data_pickle or self.capture:
                 os.makedirs("./sim_outputs/%s" % output_name)
@@ -167,15 +168,16 @@ class Intent_Inference_Env(gym.Env):
         # self.reward_if_havent_visited_final_state = 0.01
 
         #figures printing and saving video
-        self.show_prob_theta = True
+        self.show_prob_theta = False
         self.show_states = False
         self.show_action = False
         self.show_trajectory = False
         self.show_loss = True
         self.show_predicted_states_others = False
-        self.show_does_inference = True
-        self.show_reward = True
+        self.show_does_inference = False
+        self.show_reward = False
         self.reward_container = []
+        self.trial = 749
 
 
     def seed(self, seed=None):
@@ -280,6 +282,34 @@ class Intent_Inference_Env(gym.Env):
         self.done = False
         self.visited_final_state = False
         self.episode_steps = 0
+        import pickle
+
+        data = pickle.load(open("uniform_data_dist.p", "rb"))
+        xpos = data["si"][self.trial % 1000]
+        ypos = data["sj"][self.trial% 1000]
+        vi = data["vi"][self.trial% 1000]
+        vj = data["vj"][self.trial% 1000]
+        # ui = data["ui"] [self.trial]
+        # uj = data["uj"][self.trial]
+        bji_1 = data["bji"][self.trial%1000][0]
+        bji_2 = data["bji"][self.trial%1000][1]
+        bji_3 = data["bji"][self.trial%1000][2]
+        bji_4 = data["bji"][self.trial%1000][3]
+        bij_1 = data["bij"][self.trial%1000][0]
+        bij_2 = data["bij"][self.trial%1000][1]
+        bij_3 = data["bij"][self.trial%1000][2]
+        bij_4 = data["bij"][self.trial%1000][3]
+        agg = data["agg"][self.trial]
+
+        self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0])  # np.array([-2.0, 0])
+        self.P.CAR_2.INITIAL_POSITION = np.array([0, ypos])
+        #keeping initial velocity parameter constant for now
+        # C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
+        # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
+        if agg:
+            self.P.CAR_2.INTENT = 1e6
+        else:
+            self.P.CAR_2.INTENT = 1
 
         self.car_1 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_1,
@@ -301,12 +331,20 @@ class Intent_Inference_Env(gym.Env):
         self.car_2.does_inference= True
 
         self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
-                      C.PARAMETERSET_2.INITIAL_SPEED, -C.PARAMETERSET_2.INITIAL_SPEED,
+                      C.PARAMETERSET_2.INITIAL_SPEED_1, -C.PARAMETERSET_2.INITIAL_SPEED_2,
                       0 , 0,
-                      self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
-                      self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
-                      self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
-                      self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
+                      bji_1, bji_2,
+                      bji_3, bji_4,
+                      bij_1, bij_2,
+                      bij_3, bij_4)
+
+        # self.state = (self.car_1.states[0][0], self.car_2.states[0][1],
+        #               C.PARAMETERSET_2.INITIAL_SPEED, -C.PARAMETERSET_2.INITIAL_SPEED,
+        #               0 , 0,
+        #               self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
+        #               self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
+        #               self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
+        #               self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
 
         # self.state = (self.car_1.states[0][0], self.car_2.states[0][1], self.car_1.planned_trajectory[0][0],
         #               self.car_2.planned_trajectory[0][0], self.car_1.joint_probability_matrix[0,0], self.car_1.joint_probability_matrix[0,1],
@@ -315,7 +353,40 @@ class Intent_Inference_Env(gym.Env):
         #               self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
 
 
+        if self.P.CAR_1.INTENT == 1:
+            cap = [bji_1,bji_2]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_1.theta_probability = cap2
+        else:
+            cap = [bji_3, bji_4]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_1.theta_probability = cap2
+
+
+        if self.P.CAR_2.INTENT == 1:
+            cap = [bij_1,bij_2]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_2.theta_probability = cap2
+        else:
+            cap = [bij_3, bij_4]
+            cap = np.array(cap)
+            cap2 = cap/sum(cap)
+            self.car_2.theta_probability = cap2
+
+        # output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        output_name = "data_trial_" + str(self.trial%1000)
+
+        if not os.path.exists("./sim_outputs/%s" % output_name):
+            os.makedirs("./sim_outputs/%s" % output_name)
+
+        self.sim_out = open("./sim_outputs/%s/output.pkl" % output_name, "wb")
+
+
         self.s = np.array(self.state)
+        self.trial = self.trial+1
         return self.s
 
     def save_show_data(self):
@@ -385,7 +456,10 @@ class Intent_Inference_Env(gym.Env):
                                   does_inf=not self.car_2.skip_update,
                                   predicted_trajectory_other=self.car_2.predicted_trajectory_set_other)
 
-        self.sim_draw.draw_frame(self.sim_data, 0 , self.episode_steps-1)
+        if self.draw:
+            self.sim_draw.draw_frame(self.sim_data, 0 , self.episode_steps-1)
+
+
 
 
 
@@ -394,6 +468,10 @@ class Intent_Inference_Env(gym.Env):
             pg.image.save(self.sim_draw.screen, "%simg%03d.jpeg" % (self.output_dir, self.episode_steps-1))
 
 
+
+    def dump_data(self):
+        pickle.dump(self.sim_data, self.sim_out, pickle.HIGHEST_PROTOCOL)
+        print('Output pickled and dumped.')
 
     def show_plots(self):
         import matplotlib.pyplot as plt

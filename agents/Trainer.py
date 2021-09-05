@@ -33,12 +33,12 @@ class Trainer(object):
         }
         return agent_to_color_dictionary
 
-    def run_games_for_agents(self, eval= False):
+    def run_games_for_agents(self, eval= False, checkpoint= False):
         """Run a set of games for each agent. Optionally visualising and/or saving the results"""
         self.results = self.create_object_to_store_results()
         for agent_number, agent_class in enumerate(self.agents):
             agent_name = agent_class.agent_name
-            self.run_games_for_agent(agent_number + 1, agent_class, eval)
+            self.run_games_for_agent(agent_number + 1, agent_class, eval= eval, checkpoint=checkpoint)
             if self.config.visualise_overall_agent_results:
                 agent_rolling_score_results = [results[1] for results in  self.results[agent_name]]
                 self.visualise_overall_agent_results(agent_rolling_score_results, agent_name, show_mean_and_std_range=True)
@@ -55,7 +55,7 @@ class Trainer(object):
         else: results = self.load_obj(self.config.file_to_save_data_results)
         return results
 
-    def run_games_for_agent(self, agent_number, agent_class, eval= False):
+    def run_games_for_agent(self, agent_number, agent_class, eval= False, checkpoint= False):
         """Runs a set of games for a given agent, saving the results in self.results"""
         agent_results = []
         agent_name = agent_class.agent_name
@@ -82,6 +82,8 @@ class Trainer(object):
             print(agent.hyperparameters)
             print("RANDOM SEED " , agent_config.seed)
             if not eval:
+                if checkpoint:
+                    agent.load_model('actor-local', 'critic-local', 'critic-local-2')
                 game_scores, rolling_scores, time_taken = agent.run_n_episodes()
             else:
                 agent.load_model_eval('actor-local', 'critic-local')

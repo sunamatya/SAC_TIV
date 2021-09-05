@@ -1,0 +1,123 @@
+Filename: C:\Users\samatya.ASURITE\PycharmProjects\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\agents\actor_critic_agents\SAC.py
+
+Line #    Mem usage    Increment  Occurences   Line Contents
+============================================================
+   110   1457.9 MiB   1457.9 MiB           1       @profile(stream=log_fp)
+   111                                             def step_eval(self):
+   112                                                 """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
+   113                                                 #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
+   114   1457.9 MiB      0.0 MiB           1           eval_ep = True
+   115   1457.9 MiB      0.0 MiB           1           self.episode_step_number_val = 0
+   116   1457.9 MiB      0.0 MiB           1           name = str(self.environment.id)
+   117   1457.9 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   118                                                     frames = []
+   119                                         
+   120   1459.7 MiB      0.0 MiB           2           while not self.done:
+   121   1457.9 MiB      0.0 MiB           1               self.episode_step_number_val += 1
+   122   1459.5 MiB      1.6 MiB           1               self.action = self.pick_action(eval_ep)
+   123   1459.7 MiB      0.2 MiB           1               self.conduct_action(self.action)
+   124                                                     # if self.time_for_critic_and_actor_to_learn():
+   125                                                     #     for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
+   126                                                     #         self.learn()
+   127   1459.7 MiB      0.0 MiB           1               mask = False if self.episode_step_number_val >= self.environment._max_episode_steps else self.done
+   128                                                     #if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+   129   1459.7 MiB      0.0 MiB           1               self.state = self.next_state
+   130   1459.7 MiB      0.0 MiB           1               self.global_step_number += 1
+   131   1459.7 MiB      0.0 MiB           1               if name == "<CartPoleEnv<CartPole-v0>>":
+   132                                                         frames.append(self.environment.render(mode='rgb_array'))
+   133   1459.7 MiB      0.0 MiB           1               if name == "Intent Inf":
+   134   1459.7 MiB      0.0 MiB           1                   self.environment.save_show_data()
+   135                                                     #print("tester:", len(frames))
+   136                                         
+   137   1459.7 MiB      0.0 MiB           1           print(self.total_episode_score_so_far)
+   138   1459.7 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   139                                                     self.display_frames_as_gif(frames)
+   140   1459.7 MiB      0.0 MiB           1           if name == "Intent Inf":
+   141                                                     #self.environment.show_plots()
+   142   1459.7 MiB      0.0 MiB           1               self.environment.dump_data()
+   143   1459.7 MiB      0.0 MiB           1           if eval_ep: self.print_summary_of_latest_evaluation_episode()
+   144   1459.7 MiB      0.0 MiB           1           self.episode_number += 1
+
+
+Filename: C:\Users\samatya.ASURITE\PycharmProjects\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\agents\actor_critic_agents\SAC.py
+
+Line #    Mem usage    Increment  Occurences   Line Contents
+============================================================
+   110   1459.9 MiB   1459.9 MiB           1       @profile(stream=log_fp)
+   111                                             def step_eval(self):
+   112                                                 """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
+   113                                                 #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
+   114   1459.9 MiB      0.0 MiB           1           eval_ep = True
+   115   1459.9 MiB      0.0 MiB           1           self.episode_step_number_val = 0
+   116   1459.9 MiB      0.0 MiB           1           name = str(self.environment.id)
+   117   1459.9 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   118                                                     frames = []
+   119                                         
+   120   1459.9 MiB      0.0 MiB           2           while not self.done:
+   121   1459.9 MiB      0.0 MiB           1               self.episode_step_number_val += 1
+   122   1459.9 MiB      0.0 MiB           1               self.action = self.pick_action(eval_ep)
+   123   1459.9 MiB      0.1 MiB           1               self.conduct_action(self.action)
+   124                                                     # if self.time_for_critic_and_actor_to_learn():
+   125                                                     #     for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
+   126                                                     #         self.learn()
+   127   1459.9 MiB      0.0 MiB           1               mask = False if self.episode_step_number_val >= self.environment._max_episode_steps else self.done
+   128                                                     #if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+   129   1459.9 MiB      0.0 MiB           1               self.state = self.next_state
+   130   1459.9 MiB      0.0 MiB           1               self.global_step_number += 1
+   131   1459.9 MiB      0.0 MiB           1               if name == "<CartPoleEnv<CartPole-v0>>":
+   132                                                         frames.append(self.environment.render(mode='rgb_array'))
+   133   1459.9 MiB      0.0 MiB           1               if name == "Intent Inf":
+   134   1459.9 MiB      0.0 MiB           1                   self.environment.save_show_data()
+   135                                                     #print("tester:", len(frames))
+   136                                         
+   137   1459.9 MiB      0.0 MiB           1           print(self.total_episode_score_so_far)
+   138   1459.9 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   139                                                     self.display_frames_as_gif(frames)
+   140   1459.9 MiB      0.0 MiB           1           if name == "Intent Inf":
+   141                                                     #self.environment.show_plots()
+   142   1459.9 MiB      0.0 MiB           1               self.environment.dump_data()
+   143   1459.9 MiB      0.0 MiB           1           if eval_ep: self.print_summary_of_latest_evaluation_episode()
+   144   1459.9 MiB      0.0 MiB           1           self.episode_number += 1
+
+
+Filename: C:\Users\samatya.ASURITE\PycharmProjects\Deep-Reinforcement-Learning-Algorithms-with-PyTorch\agents\actor_critic_agents\SAC.py
+
+Line #    Mem usage    Increment  Occurences   Line Contents
+============================================================
+   110   1459.9 MiB   1459.9 MiB           1       @profile(stream=log_fp)
+   111                                             def step_eval(self):
+   112                                                 """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
+   113                                                 #eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
+   114   1459.9 MiB      0.0 MiB           1           eval_ep = True
+   115   1459.9 MiB      0.0 MiB           1           self.episode_step_number_val = 0
+   116   1459.9 MiB      0.0 MiB           1           name = str(self.environment.id)
+   117   1459.9 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   118                                                     frames = []
+   119                                         
+   120   1460.0 MiB      0.0 MiB           2           while not self.done:
+   121   1459.9 MiB      0.0 MiB           1               self.episode_step_number_val += 1
+   122   1459.9 MiB      0.0 MiB           1               self.action = self.pick_action(eval_ep)
+   123   1460.0 MiB      0.0 MiB           1               self.conduct_action(self.action)
+   124                                                     # if self.time_for_critic_and_actor_to_learn():
+   125                                                     #     for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
+   126                                                     #         self.learn()
+   127   1460.0 MiB      0.0 MiB           1               mask = False if self.episode_step_number_val >= self.environment._max_episode_steps else self.done
+   128                                                     #if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+   129   1460.0 MiB      0.0 MiB           1               self.state = self.next_state
+   130   1460.0 MiB      0.0 MiB           1               self.global_step_number += 1
+   131   1460.0 MiB      0.0 MiB           1               if name == "<CartPoleEnv<CartPole-v0>>":
+   132                                                         frames.append(self.environment.render(mode='rgb_array'))
+   133   1460.0 MiB      0.0 MiB           1               if name == "Intent Inf":
+   134   1460.0 MiB      0.0 MiB           1                   self.environment.save_show_data()
+   135                                                     #print("tester:", len(frames))
+   136                                         
+   137   1460.0 MiB      0.0 MiB           1           print(self.total_episode_score_so_far)
+   138   1460.0 MiB      0.0 MiB           1           if name == "<CartPoleEnv<CartPole-v0>>":
+   139                                                     self.display_frames_as_gif(frames)
+   140   1460.0 MiB      0.0 MiB           1           if name == "Intent Inf":
+   141                                                     #self.environment.show_plots()
+   142   1460.0 MiB      0.0 MiB           1               self.environment.dump_data()
+   143   1460.0 MiB      0.0 MiB           1           if eval_ep: self.print_summary_of_latest_evaluation_episode()
+   144   1460.0 MiB      0.0 MiB           1           self.episode_number += 1
+
+

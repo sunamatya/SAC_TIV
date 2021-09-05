@@ -6,8 +6,10 @@ import random
 import numpy as np
 import torch
 import time
+
 # import tensorflow as tf
 from nn_builder.pytorch.NN import NN
+
 # from tensorboardX import SummaryWriter
 from torch.optim import optimizer
 
@@ -201,12 +203,19 @@ class Base_Agent(object):
         """Runs game to completion n times and then summarises results and saves model (if asked to)"""
         if num_episodes is None: num_episodes = self.config.num_episodes_to_run
         start = time.time()
+        log_time = open("test_time_log.txt", "w")
 
         while self.episode_number < num_episodes:
             self.reset_game()
+            start_eval = time.time()
             self.step_eval()
+            time_episode = time.time()-start_eval
+            time_episode = str(time_episode)
+            log_line = "Episode_number: " + str(self.episode_number) + " episode_time "+ time_episode+ "\n"
+            log_time.writelines(log_line)
 
             if save_and_print_results: self.save_and_print_result()
+        log_time.close()
         time_taken = time.time() - start
 
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
