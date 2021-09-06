@@ -14,7 +14,7 @@ from utilities.data_structures.Config import Config
 config = Config()
 config.seed = 1
 config.environment = Intent_Inference_Env()
-config.num_episodes_to_run = 150
+config.num_episodes_to_run = 750
 config.file_to_save_data_results = "data_and_graphs/Emp_Intent_Inf_Results_Data.pkl"
 config.file_to_save_results_graph = "data_and_graphs/Emp_Intent_Inf_Results_Graph.png"
 config.show_solution_score = False
@@ -82,7 +82,10 @@ config.hyperparameters = {
 if __name__ == "__main__":
     AGENTS = [SAC_Discrete]
     trainer = Trainer(config, AGENTS)
-    trainer.run_games_for_agents()
+    #trainer.run_games_for_agents(checkpoint= False)
+    #for retraining with old model
+    trainer.run_games_for_agents(checkpoint= True)
+
 
 
 

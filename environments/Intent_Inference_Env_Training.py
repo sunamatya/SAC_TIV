@@ -211,10 +211,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[self.episode_steps][0] < -2.0
+            self.car_1.states[self.episode_steps][0] < -3.0
             or self.car_1.states[self.episode_steps][0] > 1.0
             or self.car_2.states[self.episode_steps][1] < -1.0
-            or self.car_2.states[self.episode_steps][1] > 2.0
+            or self.car_2.states[self.episode_steps][1] > 3.0
             or self.episode_steps > self._max_episode_steps
             )
 

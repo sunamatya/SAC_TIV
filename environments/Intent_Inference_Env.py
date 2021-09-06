@@ -264,10 +264,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[self.episode_steps][0] < -2.0
+            self.car_1.states[self.episode_steps][0] < -3.0
             or self.car_1.states[self.episode_steps][0] > 1.0
             or self.car_2.states[self.episode_steps][1] < -1.0
-            or self.car_2.states[self.episode_steps][1] > 2.0
+            or self.car_2.states[self.episode_steps][1] > 3.0
             or self.episode_steps > self._max_episode_steps
             )
 
@@ -435,7 +435,8 @@ class Intent_Inference_Env(gym.Env):
                                   planned_loss=plannedloss_car1,
                                   does_inf=not self.car_1.skip_update,
                                   predicted_trajectory_other=self.car_1.predicted_trajectory_set_other,
-                                  collision_loss=collision_loss)
+                                  collision_loss=collision_loss,
+                                  joint_probability_matrix=self.car_1.joint_probability_matrix)
 
         self.sim_data.append_car2(states=self.car_2.states,
                                   actions=self.car_2.actions_set,
@@ -454,7 +455,8 @@ class Intent_Inference_Env(gym.Env):
                                   theta_probability=self.car_2.theta_probability,
                                   planned_loss=plannedloss_car2,
                                   does_inf=not self.car_2.skip_update,
-                                  predicted_trajectory_other=self.car_2.predicted_trajectory_set_other)
+                                  predicted_trajectory_other=self.car_2.predicted_trajectory_set_other,
+                                  joint_probability_matrix=self.car_2.joint_probability_matrix)
 
         if self.draw:
             self.sim_draw.draw_frame(self.sim_data, 0 , self.episode_steps-1)
