@@ -193,10 +193,8 @@ class Intent_Inference_Env(gym.Env):
         self.state = (self.car_1.states[self.episode_steps][0], self.car_2.states[self.episode_steps][1],
                       self.car_1.actions_set[-1][0], self.car_2.actions_set[-1][1],
                       self.car_1.planned_trajectory[0], self.car_2.planned_trajectory[0],
-                      self.car_1.joint_probability_matrix[0, 0], self.car_1.joint_probability_matrix[0, 1],
-                      self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1, 1],
-                      self.car_2.joint_probability_matrix[0, 0], self.car_2.joint_probability_matrix[0, 1],
-                      self.car_2.joint_probability_matrix[1, 0], self.car_2.joint_probability_matrix[1, 1])
+                      self.car_1.theta_probability[0], self.car_1.theta_probability[1],
+                      self.car_2.theta_probability[0], self.car_2.theta_probability[1])
         # self.state = (self.car_1.states[0][0], self.car_2.states[0][1], self.car_1.planned_trajectory[0],
         #               self.car_2.planned_trajectory[0], self.car_1.joint_probability_matrix[0,0], self.car_1.joint_probability_matrix[0,1],
         #               self.car_1.joint_probability_matrix[1, 0], self.car_1.joint_probability_matrix[1,1],
