@@ -70,7 +70,7 @@ class Intent_Inference_Env(gym.Env):
         # is still within bounds. # car1 -2-1 # car2 2, -1
         low = np.array(
             [
-                -2,
+                -3.5,
                 -1,
                 -0.05,
                 -0.05,
@@ -91,7 +91,7 @@ class Intent_Inference_Env(gym.Env):
         high = np.array(
             [
                 1,
-                2,
+                3.5,
                 0.05,
                 0.05,
                 3,
@@ -177,7 +177,7 @@ class Intent_Inference_Env(gym.Env):
         self.show_does_inference = False
         self.show_reward = False
         self.reward_container = []
-        self.trial = 749
+        self.trial = 149
 
 
     def seed(self, seed=None):
@@ -195,9 +195,12 @@ class Intent_Inference_Env(gym.Env):
             action = action[0]
         assert action in [0, 1], "Action must be a 0 or a 1"
 
-        skip_update_car2 = False
-        #print(action)
+        # if np.random.randint(2):
+        #     skip_update_car2 = False
+        # else:
+        #     skip_update_car2 = True
 
+        skip_update_car2 = False
 
         #get actions here
         if action == 1: skip_update_car1 = False
@@ -205,7 +208,6 @@ class Intent_Inference_Env(gym.Env):
         # #if self.episode_steps == 0:
         # if self.episode_steps> 3:
         #     skip_update_car1 = True
-        #     action = 0
 
 
 
@@ -242,6 +244,7 @@ class Intent_Inference_Env(gym.Env):
         #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
         #reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
         reward = -(intent_loss_car_1+ (intent_loss_car_2 / 1e3)+ collision_loss+ alpha*action* 400)
+        #reward = -(intent_loss_car_1 + collision_loss + (intent_loss_car_2) / 1e3 + action * plannedloss_car1/2 * alpha)
         self.reward_container.append(reward)
         #reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
@@ -264,10 +267,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[self.episode_steps][0] < -3.0
+            self.car_1.states[self.episode_steps][0] < -3.5
             or self.car_1.states[self.episode_steps][0] > 1.0
             or self.car_2.states[self.episode_steps][1] < -1.0
-            or self.car_2.states[self.episode_steps][1] > 3.0
+            or self.car_2.states[self.episode_steps][1] > 3.5
             or self.episode_steps > self._max_episode_steps
             )
 
@@ -284,32 +287,34 @@ class Intent_Inference_Env(gym.Env):
         self.episode_steps = 0
         import pickle
 
-        data = pickle.load(open("uniform_data_dist.p", "rb"))
-        xpos = data["si"][self.trial % 1000]
-        ypos = data["sj"][self.trial% 1000]
-        vi = data["vi"][self.trial% 1000]
-        vj = data["vj"][self.trial% 1000]
+        #data = pickle.load(open("uniform_data_dist.p", "rb"))
+        data = pickle.load(open("uniform_data_dist_3_3_200.p", "rb"))
+
+        xpos = data["si"][self.trial % 200]
+        ypos = data["sj"][self.trial% 200]
+        vi = data["vi"][self.trial% 200]
+        vj = data["vj"][self.trial% 200]
         # ui = data["ui"] [self.trial]
         # uj = data["uj"][self.trial]
-        bji_1 = data["bji"][self.trial%1000][0]
-        bji_2 = data["bji"][self.trial%1000][1]
-        bji_3 = data["bji"][self.trial%1000][2]
-        bji_4 = data["bji"][self.trial%1000][3]
-        bij_1 = data["bij"][self.trial%1000][0]
-        bij_2 = data["bij"][self.trial%1000][1]
-        bij_3 = data["bij"][self.trial%1000][2]
-        bij_4 = data["bij"][self.trial%1000][3]
-        agg = data["agg"][self.trial]
+        bji_1 = data["bji"][self.trial%200][0]
+        bji_2 = data["bji"][self.trial%200][1]
+        bji_3 = data["bji"][self.trial%200][2]
+        bji_4 = data["bji"][self.trial%200][3]
+        bij_1 = data["bij"][self.trial%200][0]
+        bij_2 = data["bij"][self.trial%200][1]
+        bij_3 = data["bij"][self.trial%200][2]
+        bij_4 = data["bij"][self.trial%200][3]
+        #agg = data["agg"][self.trial]
 
         self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0])  # np.array([-2.0, 0])
         self.P.CAR_2.INITIAL_POSITION = np.array([0, ypos])
         #keeping initial velocity parameter constant for now
         # C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
         # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
-        if agg:
-            self.P.CAR_2.INTENT = 1e6
-        else:
-            self.P.CAR_2.INTENT = 1
+        # if agg:
+        #     self.P.CAR_2.INTENT = 1e6
+        # else:
+        #     self.P.CAR_2.INTENT = 1
 
         self.car_1 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_1,
@@ -320,7 +325,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="non empathetic")  #H
+                                       inference_type="empathetic")  #H
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
@@ -377,7 +382,7 @@ class Intent_Inference_Env(gym.Env):
             self.car_2.theta_probability = cap2
 
         # output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        output_name = "data_trial_" + str(self.trial%1000)
+        output_name = "data_trial_" + str(self.trial%200)
 
         if not os.path.exists("./sim_outputs/%s" % output_name):
             os.makedirs("./sim_outputs/%s" % output_name)
@@ -392,11 +397,11 @@ class Intent_Inference_Env(gym.Env):
     def save_show_data(self):
         import numpy as np
 
-        grace = []
-        for wanted_trajectory_other in self.car_2.wanted_trajectory_other:
-            wanted_actions_other = self.car_2.dynamic(wanted_trajectory_other)
-            grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
-        self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
+        # grace = []
+        # for wanted_trajectory_other in self.car_2.wanted_trajectory_other:
+        #     wanted_actions_other = self.car_2.dynamic(wanted_trajectory_other)
+        #     grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
+        # self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
 
 
 
@@ -436,7 +441,8 @@ class Intent_Inference_Env(gym.Env):
                                   does_inf=not self.car_1.skip_update,
                                   predicted_trajectory_other=self.car_1.predicted_trajectory_set_other,
                                   collision_loss=collision_loss,
-                                  joint_probability_matrix=self.car_1.joint_probability_matrix)
+                                  joint_probability_matrix=self.car_1.joint_probability_matrix,
+                                  percieved_state_o=self.car_1.percieved_states_o)
 
         self.sim_data.append_car2(states=self.car_2.states,
                                   actions=self.car_2.actions_set,

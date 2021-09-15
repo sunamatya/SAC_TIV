@@ -64,7 +64,7 @@ class Intent_Inference_Env(gym.Env):
         # is still within bounds. # car1 -2-1 # car2 2, -1
         low = np.array(
             [
-                -2,
+                -3.5,
                 -1,
                 -0.05,
                 -0.05,
@@ -85,7 +85,7 @@ class Intent_Inference_Env(gym.Env):
         high = np.array(
             [
                 1,
-                2,
+                3.5,
                 0.05,
                 0.05,
                 3,
@@ -157,8 +157,12 @@ class Intent_Inference_Env(gym.Env):
             action = action[0]
         assert action in [0, 1], "Action must be a 0 or a 1"
 
-        skip_update_car2 = False
+        # if np.random.randint(2):
+        #     skip_update_car2 = False
+        # else:
+        #     skip_update_car2 = True
 
+        skip_update_car2 = False
 
         #get actions here
         if action == 1: skip_update_car1 = False
@@ -189,7 +193,8 @@ class Intent_Inference_Env(gym.Env):
 
         #reward = plannedloss_car1+ plannedloss_car2 - action*plannedloss_car1 #cumululative loss - effort
         alpha = 1
-        reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
+        #reward = -(intent_loss_car_1+ collision_loss+ (intent_loss_car_2)/1e3 + action * plannedloss_car1/2 * alpha)
+        reward = -(intent_loss_car_1+ (intent_loss_car_2 / 1e3)+ collision_loss+ alpha*action* 400)
         #reward = plannedloss_car1-action*plannedloss_car1 #car1 loss -effort
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
 
@@ -211,10 +216,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[self.episode_steps][0] < -3.0
+            self.car_1.states[self.episode_steps][0] < -3.5
             or self.car_1.states[self.episode_steps][0] > 1.0
             or self.car_2.states[self.episode_steps][1] < -1.0
-            or self.car_2.states[self.episode_steps][1] > 3.0
+            or self.car_2.states[self.episode_steps][1] > 3.5
             or self.episode_steps > self._max_episode_steps
             )
 
@@ -234,7 +239,8 @@ class Intent_Inference_Env(gym.Env):
 
         import pickle
 
-        data = pickle.load(open("uniform_data_dist.p", "rb"))
+        #data = pickle.load(open("uniform_data_dist.p", "rb"))
+        data = pickle.load(open("uniform_data_dist_3_3_200.p", "rb"))
         xpos = data["si"][self.trial]
         ypos = data["sj"][self.trial]
         vi = data["vi"] [self.trial]
@@ -249,7 +255,7 @@ class Intent_Inference_Env(gym.Env):
         bij_2 = data["bij"][self.trial][1]
         bij_3 = data["bij"][self.trial][2]
         bij_4 = data["bij"][self.trial][3]
-        agg = data["agg"][self.trial]
+        #agg = data["agg"][self.trial]
 
 
         self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0]) #np.array([-2.0, 0])
@@ -259,10 +265,10 @@ class Intent_Inference_Env(gym.Env):
         # C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
         # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
 
-        if agg:
-            self.P.CAR_2.INTENT = 1e6
-        else:
-            self.P.CAR_2.INTENT = 1
+        # if agg:
+        #     self.P.CAR_2.INTENT = 1e6
+        # else:
+        #     self.P.CAR_2.INTENT = 1
 
 
 
@@ -282,7 +288,7 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="non empathetic")  #H
+                                       inference_type="empathetic")  #H
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
