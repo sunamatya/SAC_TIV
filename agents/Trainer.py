@@ -65,7 +65,8 @@ class Trainer(object):
             if eval:
                 agent_config = self.config
             else:
-                agent_config = copy.deepcopy(self.config)
+                #agent_config = copy.deepcopy(self.config)
+                agent_config = self.config
 
 
             if self.environment_has_changeable_goals(agent_config.environment) and self.agent_cant_handle_changeable_goals_without_flattening(agent_name):
@@ -76,6 +77,7 @@ class Trainer(object):
             if self.config.randomise_random_seed: agent_config.seed = random.randint(0, 2**32 - 2)
             agent_config.hyperparameters = agent_config.hyperparameters[agent_group]
             print("AGENT NAME: {}".format(agent_name))
+            print("prefix: ", agent_config.save_prefix)
             print("\033[1m" + "{}.{}: {}".format(agent_number, agent_round, agent_name) + "\033[0m", flush=True)
             agent = agent_class(agent_config)
             self.environment_name = agent.environment_title

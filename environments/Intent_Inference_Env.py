@@ -6,7 +6,7 @@ from gym import spaces, logger
 from gym.utils import seeding
 import math
 import sys
-sys.path.append("C:\\Users\\samatya.ASURITE\\PycharmProjects\\SocialGracefullnessTIV")
+sys.path.append("C:\\Users\\samatya\\PycharmProjects\\SocialGracefullnessTIV")
 from constants import CONSTANTS as C
 from autonomous_vehicle_nosim import AutonomousVehicle
 
@@ -60,17 +60,19 @@ class Intent_Inference_Env(gym.Env):
     environment_name = "Intent Inference Environment"
 
 
-    def __init__(self):
+    def __init__(self, noise_level = 0, save_prefix = ""):
 
         #only using continious spaces here
         self.x_threshold = 3.0
         self.y_threshold = 3.0
+        self.noise_level = noise_level
+        self.save_prefix = save_prefix
 
 
         # is still within bounds. # car1 -2-1 # car2 2, -1
         low = np.array(
             [
-                -3.5,
+                -3,
                 -1,
                 -0.05,
                 -0.05,
@@ -91,7 +93,7 @@ class Intent_Inference_Env(gym.Env):
         high = np.array(
             [
                 1,
-                3.5,
+                3,
                 0.05,
                 0.05,
                 3,
@@ -123,12 +125,14 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_1,
                                        loss_style="reactive",
                                        who=1,
-                                       inference_type="empathetic")  #M
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level) #M
         self.car_2 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level) #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -168,16 +172,17 @@ class Intent_Inference_Env(gym.Env):
         # self.reward_if_havent_visited_final_state = 0.01
 
         #figures printing and saving video
-        self.show_prob_theta = False
+        self.show_prob_theta = True
         self.show_states = False
         self.show_action = False
         self.show_trajectory = False
         self.show_loss = True
         self.show_predicted_states_others = False
-        self.show_does_inference = False
-        self.show_reward = False
+        self.show_does_inference = True
+        self.show_reward = True
         self.reward_container = []
-        self.trial = 149
+        self.trial = 751
+        self.output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 
     def seed(self, seed=None):
@@ -196,11 +201,18 @@ class Intent_Inference_Env(gym.Env):
         assert action in [0, 1], "Action must be a 0 or a 1"
 
         # if np.random.randint(2):
-        #     skip_update_car2 = False
+        #     self.P.CAR_2.INTENT = 1e6
         # else:
-        #     skip_update_car2 = True
+        #     self.P.CAR_2.INTENT = 1
+
+        if self.episode_steps % 5 == 0:
+            if self.P.CAR_2.INTENT == 1:
+                self.P.CAR_2.INTENT = 1e6
+            else:
+                self.P.CAR_2.INTENT = 1
 
         skip_update_car2 = False
+
 
         #get actions here
         if action == 1: skip_update_car1 = False
@@ -208,6 +220,7 @@ class Intent_Inference_Env(gym.Env):
         # #if self.episode_steps == 0:
         # if self.episode_steps> 3:
         #     skip_update_car1 = True
+        #     action = 0
 
 
 
@@ -217,9 +230,14 @@ class Intent_Inference_Env(gym.Env):
 
         #update for the other agent regardless
         #self.update_done_reward()
-        intent_loss_car_1 = self.car_1.intent * np.exp(
+        # intent_loss_car_1 = self.car_1.intent * np.exp(
+        #     C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
+        # intent_loss_car_2 = self.car_2.intent * np.exp(
+        #     C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
+
+        intent_loss_car_1 = self.P.CAR_1.INTENT * np.exp(
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
-        intent_loss_car_2 = self.car_2.intent * np.exp(
+        intent_loss_car_2 = self.P.CAR_2.INTENT * np.exp(
             C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
 
         predicted_distance = np.sum((self.car_1.temp_action_set - self.car_2.temp_action_set)**2, axis=1)
@@ -244,7 +262,6 @@ class Intent_Inference_Env(gym.Env):
         #reward = -(plannedloss_car1 + plannedloss_car2 + action * plannedloss_car1)
         #reward = -(plannedloss_car1 + action * plannedloss_car1 * alpha)
         reward = -(intent_loss_car_1+ (intent_loss_car_2 / 1e3)+ collision_loss+ alpha*action* 400)
-        #reward = -(intent_loss_car_1 + collision_loss + (intent_loss_car_2) / 1e3 + action * plannedloss_car1/2 * alpha)
         self.reward_container.append(reward)
         #reward = plannedloss_car1-action*plannedloss_car1
         #reward = plannedloss_car1 - action * (plannedloss_car1)/2
@@ -267,10 +284,10 @@ class Intent_Inference_Env(gym.Env):
 
         #threshold when task is done
         self.done = bool(
-            self.car_1.states[self.episode_steps][0] < -3.5
+            self.car_1.states[self.episode_steps][0] < -3.0
             or self.car_1.states[self.episode_steps][0] > 1.0
             or self.car_2.states[self.episode_steps][1] < -1.0
-            or self.car_2.states[self.episode_steps][1] > 3.5
+            or self.car_2.states[self.episode_steps][1] > 3.0
             or self.episode_steps > self._max_episode_steps
             )
 
@@ -287,45 +304,48 @@ class Intent_Inference_Env(gym.Env):
         self.episode_steps = 0
         import pickle
 
-        #data = pickle.load(open("uniform_data_dist.p", "rb"))
-        data = pickle.load(open("uniform_data_dist_3_3_200.p", "rb"))
-
-        xpos = data["si"][self.trial % 200]
-        ypos = data["sj"][self.trial% 200]
-        vi = data["vi"][self.trial% 200]
-        vj = data["vj"][self.trial% 200]
+        data = pickle.load(open("uniform_data_dist.p", "rb"))
+        #data = pickle.load(open("uniform_data_dist_closer_to_intersection_200.p", "rb"))
+        xpos = data["si"][self.trial % 1000]
+        ypos = data["sj"][self.trial% 1000]
+        vi = data["vi"][self.trial% 1000]
+        vj = data["vj"][self.trial% 1000]
         # ui = data["ui"] [self.trial]
         # uj = data["uj"][self.trial]
-        bji_1 = data["bji"][self.trial%200][0]
-        bji_2 = data["bji"][self.trial%200][1]
-        bji_3 = data["bji"][self.trial%200][2]
-        bji_4 = data["bji"][self.trial%200][3]
-        bij_1 = data["bij"][self.trial%200][0]
-        bij_2 = data["bij"][self.trial%200][1]
-        bij_3 = data["bij"][self.trial%200][2]
-        bij_4 = data["bij"][self.trial%200][3]
-        #agg = data["agg"][self.trial]
+        bji_1 = data["bji"][self.trial%1000][0]
+        bji_2 = data["bji"][self.trial%1000][1]
+        bji_3 = data["bji"][self.trial%1000][2]
+        bji_4 = data["bji"][self.trial%1000][3]
+        bij_1 = data["bij"][self.trial%1000][0]
+        bij_2 = data["bij"][self.trial%1000][1]
+        bij_3 = data["bij"][self.trial%1000][2]
+        bij_4 = data["bij"][self.trial%1000][3]
+        # agg = data["agg"][self.trial]
 
         self.P.CAR_1.INITIAL_POSITION = np.array([xpos, 0])  # np.array([-2.0, 0])
         self.P.CAR_2.INITIAL_POSITION = np.array([0, ypos])
         #keeping initial velocity parameter constant for now
         # C.PARAMETERSET_2.INITIAL_SPEED_1 = vi
-        # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
+        # # C.PARAMETERSET_2.INITIAL_SPEED_2 = vj
         # if agg:
         #     self.P.CAR_2.INTENT = 1e6
         # else:
         #     self.P.CAR_2.INTENT = 1
+        #self.P.CAR_2.INTENT = 1e6
 
         self.car_1 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_1,
                                        loss_style="reactive",
                                        who=1,
-                                       inference_type="empathetic")  #M
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level)  #M
         self.car_2 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level) #H
+
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
@@ -382,12 +402,13 @@ class Intent_Inference_Env(gym.Env):
             self.car_2.theta_probability = cap2
 
         # output_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        output_name = "data_trial_" + str(self.trial%200)
+        self.output_name = "data_trial_" + str(self.trial%1000)
+        #self.output_name = self.save_prefix + "data_trial_" + str(self.trial % 1000)
 
-        if not os.path.exists("./sim_outputs/%s" % output_name):
-            os.makedirs("./sim_outputs/%s" % output_name)
+        if not os.path.exists("./sim_outputs/%s" % self.output_name):
+            os.makedirs("./sim_outputs/%s" % self.output_name)
 
-        self.sim_out = open("./sim_outputs/%s/output.pkl" % output_name, "wb")
+        self.sim_out = open("./sim_outputs/%s/output.pkl" % self.output_name, "wb")
 
 
         self.s = np.array(self.state)
@@ -397,11 +418,11 @@ class Intent_Inference_Env(gym.Env):
     def save_show_data(self):
         import numpy as np
 
-        # grace = []
-        # for wanted_trajectory_other in self.car_2.wanted_trajectory_other:
-        #     wanted_actions_other = self.car_2.dynamic(wanted_trajectory_other)
-        #     grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
-        # self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
+        grace = []
+        for wanted_trajectory_other in self.car_2.wanted_trajectory_other:
+            wanted_actions_other = self.car_2.dynamic(wanted_trajectory_other)
+            grace.append(1000 * (self.car_1.states[-1][0] - wanted_actions_other[0][0]) ** 2)
+        self.car_1.social_gracefulness.append(sum(grace * self.car_2.wanted_inference_probability))
 
 
 
@@ -495,6 +516,8 @@ class Intent_Inference_Env(gym.Env):
                 car_1_theta = np.append(car_1_theta, np.expand_dims(self.sim_data.car2_theta_probability[t], axis=0), axis=0)
                 car_2_theta = np.append(car_2_theta, np.expand_dims(self.sim_data.car1_theta_probability[t], axis=0), axis=0)
 
+            #fig = plt.figure()
+            plt.ion()
             plt.subplot(2, 1, 1)
             plt.title("Probability graph of the vehicle")
             plt.plot(range(0,self.frame+1), car_1_theta[:,0], label = "$\hat{\Theta}_M$= 1" )
@@ -508,8 +531,12 @@ class Intent_Inference_Env(gym.Env):
             plt.ylabel("$p(\hat{\Theta}_H)$")
             plt.xlabel("frame")
             plt.legend()
+            #plt.close(fig)
+            plt.ioff()
+            plt.savefig("./sim_outputs/%s/theta_probability.png" % self.output_name)
 
-            plt.show()
+
+            #plt.show()
             # for i in range(1,self.frame+1):
             #     if car_2_theta[i,0] == 1:
             #         print(i)
@@ -540,6 +567,7 @@ class Intent_Inference_Env(gym.Env):
             ax3.plot(range(1,self.frame+1), car_2_state[:,1], label='car 2 H')
             ax3.legend()
             ax3.set(xlabel='time', ylabel='states')
+            #plt.close(fig1)
             plt.show()
 
         if self.show_action:
@@ -574,7 +602,7 @@ class Intent_Inference_Env(gym.Env):
             #ax2.plot(range(1,self.frame+1), car_2_action_predicted[:,0], label='car 1 prediction of car 2 prediction of car 1')
             ax2.legend()
             ax2.set(xlabel='time', ylabel='action')
-            #plt.show()
+            plt.show()
 
         if self.show_loss:
             car_1_loss = np.empty((0, 1))
@@ -595,6 +623,7 @@ class Intent_Inference_Env(gym.Env):
             # plt.legend()
 
             fig1, (ax1, ax2) = plt.subplots(2) #3 rows
+            plt.ion()
             # fig1.suptitle('Euclidean distance and Agent States')
             # ax1.plot(dist, label='car dist')
             # ax1.legend()
@@ -609,7 +638,10 @@ class Intent_Inference_Env(gym.Env):
             #ax2.plot(range(1,self.frame+1), car_2_action_predicted[:,0], label='car 1 prediction of car 2 prediction of car 1')
             ax2.legend()
             ax2.set(xlabel='time', ylabel='instant loss')
-            plt.show()
+            plt.ioff()
+            #plt.close(fig1)
+            plt.savefig("./sim_outputs/%s/loss.png" % self.output_name)
+            #plt.show()
 
         if self.show_does_inference:
             car_1_does_inference = np.empty((0, 1))
@@ -621,6 +653,7 @@ class Intent_Inference_Env(gym.Env):
 
 
             fig1, (ax1, ax2) = plt.subplots(2) #3 rows
+            plt.ion()
             ax1.plot(range(1,self.frame+1), car_1_does_inference, label='car 1 inference')
             #ax1.plot(range(1,self.frame+1), car_1_action_predicted[:,0], label='car 1 prediction of car 2 prediction of car 1')
             ax1.legend()
@@ -630,7 +663,11 @@ class Intent_Inference_Env(gym.Env):
             #ax2.plot(range(1,self.frame+1), car_2_action_predicted[:,0], label='car 1 prediction of car 2 prediction of car 1')
             ax2.legend()
             ax2.set(xlabel='time', ylabel='does inference')
-            plt.show()
+            #plt.close(fig1)
+            plt.ioff()
+            plt.savefig("./sim_outputs/%s/inference.png" % self.output_name)
+
+            #plt.show()
 
         if self.show_trajectory:
             car_1_predicted_trajectory_1 = np.empty((0))
@@ -684,8 +721,14 @@ class Intent_Inference_Env(gym.Env):
             plt.show()
 
         if self.show_reward:
+            fig = plt.figure()
+            plt.ion()
             plt.plot(self.reward_container)
-            plt.show()
+            #plt.close(fig)
+            plt.ioff()
+            plt.savefig("./sim_outputs/%s/reward.png" % self.output_name)
+            #plt.show()
+
 
         if self.capture:
             # Compile to video

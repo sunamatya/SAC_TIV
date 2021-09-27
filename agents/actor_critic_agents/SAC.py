@@ -135,10 +135,11 @@ class SAC(Base_Agent):
             #print("tester:", len(frames))
 
         print(self.total_episode_score_so_far)
+
         if name == "<CartPoleEnv<CartPole-v0>>":
             self.display_frames_as_gif(frames)
         if name == "Intent Inf":
-            #self.environment.show_plots()
+            self.environment.show_plots()
             self.environment.dump_data()
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1

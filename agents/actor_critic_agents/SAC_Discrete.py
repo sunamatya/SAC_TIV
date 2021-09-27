@@ -90,13 +90,20 @@ class SAC_Discrete(SAC):
         min_qf_pi = torch.min(qf1_pi, qf2_pi)
         inside_term = self.alpha * log_action_probabilities - min_qf_pi
         policy_loss = (action_probabilities * inside_term).sum(dim=1).mean()
-        log_action_probabilities = torch.sum(log_action_probabilities * action_probabilities, dim=1)
+        log_action_probabilities = torch.sum(log_action_probabilities * action_probabilities, dim= 1)
         return policy_loss, log_action_probabilities
 
     def save(self):
-        torch.save(self.critic_local.state_dict(), 'critic-local')
-        torch.save(self.critic_local_2.state_dict(), 'critic-local-2')
-        torch.save(self.actor_local.state_dict(), 'actor-local')
+        torch.save(self.critic_local.state_dict(), self.config.save_prefix + '_critic-local')
+        torch.save(self.critic_local_2.state_dict(), self.config.save_prefix + '_critic-local-2')
+        torch.save(self.actor_local.state_dict(), self.config.save_prefix + '_actor-local')
+
+    def save_episode(self, episode_number):
+        torch.save(self.critic_local.state_dict(), self.config.save_prefix + '_critic-local_'+ str(episode_number))
+        torch.save(self.critic_local_2.state_dict(), self.config.save_prefix +'_critic-local-2_' + str(episode_number))
+        torch.save(self.actor_local.state_dict(), self.config.save_prefix + '_actor-local_'+ str(episode_number))
+
+
 
     def load_model_eval(self, actor_path, critic_path):
         print('Loading models from {} and {}'.format(actor_path, critic_path))

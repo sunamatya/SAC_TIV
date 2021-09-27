@@ -54,11 +54,13 @@ class Intent_Inference_Env(gym.Env):
     environment_name = "Intent Inference Environment"
 
 
-    def __init__(self):
+    def __init__(self, noise_level = 0, save_prefix = ""):
 
         #only using continious spaces here
         self.x_threshold = 3.0
         self.y_threshold = 3.0
+        self.noise_level = noise_level
+        self.save_prefix = save_prefix
 
 
         # is still within bounds. # car1 -2-1 # car2 2, -1
@@ -117,12 +119,14 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_1,
                                        loss_style="reactive",
                                        who=1,
-                                       inference_type="empathetic")  #M
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level)  #M
         self.car_2 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level)  #H
 
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
@@ -162,6 +166,12 @@ class Intent_Inference_Env(gym.Env):
         # else:
         #     skip_update_car2 = True
 
+        if self.episode_steps % 5 == 0:
+            if self.P.CAR_2.INTENT == 1:
+                self.P.CAR_2.INTENT = 1e6
+            else:
+                self.P.CAR_2.INTENT = 1
+
         skip_update_car2 = False
 
         #get actions here
@@ -178,9 +188,14 @@ class Intent_Inference_Env(gym.Env):
 
         #update for the other agent regardless
         #self.update_done_reward()
-        intent_loss_car_1 = self.car_1.intent * np.exp(
+        # intent_loss_car_1 = self.car_1.intent * np.exp(
+        #     C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
+        # intent_loss_car_2 = self.car_2.intent * np.exp(
+        #     C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
+
+        intent_loss_car_1 = self.P.CAR_1.INTENT * np.exp(
             C.EXPTHETA * (- self.car_1.temp_action_set[C.ACTION_TIMESTEPS - 1][0] + 0.6))
-        intent_loss_car_2 = self.car_2.intent * np.exp(
+        intent_loss_car_2 = self.P.CAR_2.INTENT * np.exp(
             C.EXPTHETA * (self.car_2.temp_action_set[C.ACTION_TIMESTEPS - 1][1] + 0.6))
         #D = np.sqrt(self.car_1.states[-1][0] * self.car_1.states[-1][0] + self.car_2.states[-1][1] * self.car_2.states[-1][1])
         predicted_distance = np.sum((self.car_1.temp_action_set - self.car_2.temp_action_set)**2, axis=1)
@@ -239,8 +254,8 @@ class Intent_Inference_Env(gym.Env):
 
         import pickle
 
-        #data = pickle.load(open("uniform_data_dist.p", "rb"))
-        data = pickle.load(open("uniform_data_dist_3_3_200.p", "rb"))
+        data = pickle.load(open("uniform_data_dist.p", "rb"))
+        #data = pickle.load(open("uniform_data_dist_3_3_200.p", "rb"))
         xpos = data["si"][self.trial]
         ypos = data["sj"][self.trial]
         vi = data["vi"] [self.trial]
@@ -283,12 +298,14 @@ class Intent_Inference_Env(gym.Env):
                                        car_parameters_self=self.P.CAR_1, # position from here
                                        loss_style="reactive",
                                        who=1,
-                                       inference_type="empathetic")  #M
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level)  #M
         self.car_2 = AutonomousVehicle(scenario_parameters=self.P,
                                        car_parameters_self=self.P.CAR_2,
                                        loss_style="reactive",
                                        who=0,
-                                       inference_type="empathetic")  #H
+                                       inference_type="empathetic",
+                                       noise_level=self.noise_level)  #H
         self.car_1.other_car = self.car_2
         self.car_2.other_car = self.car_1
         self.car_1.states_o = self.car_2.states
