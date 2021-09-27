@@ -14,7 +14,7 @@ from utilities.data_structures.Config import Config
 config = Config()
 config.seed = 1
 config.environment = Intent_Inference_Env()
-config.num_episodes_to_run = 150
+config.num_episodes_to_run = 8
 config.file_to_save_data_results = "data_and_graphs/Emp_Intent_Inf_Results_Data.pkl"
 config.file_to_save_results_graph = "data_and_graphs/Emp_Intent_Inf_Results_Graph.png"
 config.show_solution_score = False
@@ -26,6 +26,10 @@ config.use_GPU = True
 config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
 config.save_model = False
+config.save_prefix = "noise_level_0.025_test_run"#"noise_tester"
+config.environment.noise_level= 0.025
+config.environment.save_prefix = config.save_prefix
+config.save_interval = 4
 
 
 config.hyperparameters = {
