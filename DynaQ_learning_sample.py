@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class DynaQ():
   def __init__(self, game, n,alpha,gamma, epsilon, max_steps):
     self.game = game
-    self.env = game.make(BLOCKING_MAZE1)
+    self.env = game.make()
     self.q = np.zeros((self.env.observation_space.n, self.env.action_space.n))
     self.epsilon = epsilon
     self.model =  Model(self.env.observation_space.n, self.env.action_space.n)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
   for t in range(trials):
     # DynaQ 5
     n = 5
-    agent = DynaQ(maze, n, alpha, gamma, epsilon, max_steps)
+    agent = DynaQ(, n, alpha, gamma, epsilon, max_steps)
     dynaq_5_r[t] = agent.learn()
 
     # DynaQ 50
