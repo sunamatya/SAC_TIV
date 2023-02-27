@@ -49,7 +49,7 @@ class DynaQ():
 
       # Check if time to switch board
       if step == 1000:
-        self.env = self.game.make(BLOCKING_MAZE2)
+        self.env = self.game.make()
         s = self.env.reset()
 
       # Add reward to count
