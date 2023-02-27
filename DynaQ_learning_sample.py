@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Environment will be found on Github
+# Environment Intent Inference Env
 
 
 class DynaQ():
