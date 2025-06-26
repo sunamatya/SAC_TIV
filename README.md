@@ -32,22 +32,21 @@ Block diagram of the RL-based intermittent empathetic intent inference. The RL a
 
 
 ## Performance Comparison of Intermittent Empathetic Intent Inference with Baseline Algorithms <a name="results_2"></a>
-We first pre-train the model where the initial positions, $x_e$ and $x_{o}$, are randomly sampled from $x_e \in [1,2,3]$ for the $x$-coordinate, where $o$ and $e$ stand for the pursuer/other and evader/ego in the game, respectively. The $y$-coordinate fixed at 0.  This pre-training is done on Task 1, where the goal position is set to (2,5). After pre-training, we retrain the model on new tasks with changing goal positions: Task 2 has a goal at (2, 4), Task 3 at (2, 1), and Task 4 at (2, 0).
-In this work, we explore how SFs with GGPI facilitates transfer to new goal positions in multi agent games. During training, we evaluate the performance at the midpoint of the game and examine the results after final convergence.
-<img src="paper_results/Slide4.PNG" alt="Drawing" style="height: 200px;"/> 
+The baseline empathetic and non-empathetic intent inference algorithms are presented in the Methods in the paper, and they ran at each time step in our study. Whereas, in the intermittent intent inference case, the AV decides whether it needs to conduct empathetic intent inference using the policy learned from the RL algorithm. The baseline algorithms are compared with the intermittent empathetic (I) intent inference algorithm. The initial position $x_H$ is sampled randomly from $x_H \in [2.5, 1.5]$ and $x_{AV}$ is sampled randomly from $x_{AV} \in [-1.5, -2.5]$.
 
-Observation: a) Possible initial position and goals for testing transfer with significant reward change (b) Path taken by SFminmax agents where pursuer agent
-is able to intervene. (c) Path taken my Minmax agents where pursuer is not to intervene (d) Cumulative return per task in the Pursuer-Evader game.
-SFminmax reward uses the feature from the previous task at the beginning to each task.
+<img src="paper_results/Slide5.PNG" alt="Drawing" style="height: 200px;"/> 
+
+Observation: We find that switching to intermittent intent inference has several benefits, primarily in terms of memory consumption and computation time. 
+The results of the comparison are shown in Table. As expected, we see a decrease in the average memory used for computation when AV performed belief updates intermittently as opposed to the cases when it was updated at every time step. As a result, the average time to process one sample of measurement in the simulation also decreases, suggesting that the algorithm has the potential to function in real time. The results are promising as they substantiate our claim that updating beliefs intermittently, as necessary, is able to maintain safe vehicle interaction as characterized by the distance between the vehicles and the cumulative reward collected by them. The value, in fact, is higher when the AV updated beliefs intermittently.
 
 ## [Intermittent Intent Inference with Measurement Noise] <a name="results_3"></a>
-We first pre-train the model where the initial positions, $x_e$ and $x_{o}$, are randomly sampled from $x_e \in [1,2,3]$ for the $x$-coordinate, where $o$ and $e$ stand for the pursuer/other and evader/ego in the game, respectively. The $y$-coordinate fixed at 0.  This pre-training is done on Task 1, where the goal position is set to (2,5). After pre-training, we retrain the model on new tasks with changing goal positions: Task 2 has a goal at (2, 4), Task 3 at (2, 1), and Task 4 at (2, 0).
-In this work, we explore how SFs with GGPI facilitates transfer to new goal positions in multi agent games. During training, we evaluate the performance at the midpoint of the game and examine the results after final convergence.
+We carry out intent inference in the presence of noise in the observation of physical states. In particular, we model the AV with measurements of the H's physical states. The initial positions of AV and H were set as $x_{AV} \in [-1.25, -1.0]$ and $x_{H} \in [1.35, 1.6]$, meaning both agents were closer to the intersection compared to the previous case study. For all the test cases, we choose both agents to be empathetic, based on the results of the previous studies. A Gaussian white noise $ n \sim \mathcal{N}(0,\,\sigma^{2})\,$ is introduced into the AV's observation of the H's position, with standard deviation of $\sigma = [0.0, 0.00625, 0.0125, 0.025, 0.05]$.
+
+<img src="paper_results/Slide6.PNG" alt="Drawing" style="height: 200px;"/> 
 <img src="paper_results/Slide4.PNG" alt="Drawing" style="height: 200px;"/> 
 
-Observation: a) Possible initial position and goals for testing transfer with significant reward change (b) Path taken by SFminmax agents where pursuer agent
-is able to intervene. (c) Path taken my Minmax agents where pursuer is not to intervene (d) Cumulative return per task in the Pursuer-Evader game.
-SFminmax reward uses the feature from the previous task at the beginning to each task.
+Observation: a) Intermittent AV is able to stop before collision in the presence of noise. b) Different estimated intent by  the AV in the presence of noise. c) Trajectories in different belief updates. 
+In safety-critical cases, intermittent intent inference shows inverse relationship between inference ratio and rate of collision.
 
 
 ## Instructions to reproduce the results <a name="instruction"></a>
