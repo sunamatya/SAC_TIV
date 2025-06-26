@@ -56,6 +56,15 @@ This repo requires working in conjunction with the following code base: [SocialG
 
 If you find this repository or the ideas presented in our paper useful for your research, please consider citing our paper.
 
+@inproceedings{amatya2022shall,
+  title={When Shall I Estimate Your Intent? Costs and Benefits of Intent Inference in Multi-Agent Interactions},
+  author={Amatya, Sunny and Ghimire, Mukesh and Ren, Yi and Xu, Zhe and Zhang, Wenlong},
+  booktitle={2022 American Control Conference (ACC)},
+  pages={586--592},
+  year={2022},
+  organization={IEEE}
+}
+
 
 ## Contact <a name="contact"></a>
 
